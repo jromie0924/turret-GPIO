@@ -1,0 +1,5 @@
+{
+  "arduino.useArduinoCli": true,
+  "arduino.path": "/home/jackson/bin/arduino-1.8.19/bin",
+  "arduino.commandPath": "arduino-cli"
+}
