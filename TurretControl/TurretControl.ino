@@ -1,76 +1,63 @@
-#include<Servo.h>
-#include<string.h>
-#include <stdio.h>
+#include <Servo.h>
 
-#include "Coordinates.h"
-
-#define LEFT 900
-#define RIGHT 2100
+#define BUF_SIZE 8
+#define TIMEOUT 500
+#define TRUE_LEFT 900
+#define TRUE_RIGHT 2100
 #define CENTER 1500
+#define RIGHT 1773
+#define LEFT 1227
 #define ONE_DEGREE 7
 #define X_PIN 5
-#define PIXELS 320
-#define BUFFER_SIZE 7
+#define X_PIXELS 640.0
+#define Y_PIXELS 470.0
+#define FOV 78.0
+#define ZERO_DEGREES 51
+#define MAX_DEGREES 129
+
+// FOV: 78 degrees: 39 degrees left or right.
+// Or 39 degrees center.
 
 Servo xServo;
 
-// FOV: 78 degrees: 39 degrees left or right.
-// Frame: 320 x 320 px
-
 int pos = CENTER;
-char buf[BUFFER_SIZE];
+
 void setup() {
   xServo.attach(X_PIN, LEFT, RIGHT);
-  delay(500);
-
-  Serial.begin(115200);
-  Serial.setTimeout(1);
+  xServo.writeMicroseconds(CENTER);
+  delay(1000);
+  Serial.begin(57600);
 }
+
 void loop() {
-  while (!Serial.available());
-//  int x = Serial.readString().toInt();
-  int rlen = Serial.readBytes(buf, BUFFER_SIZE);
-  for (int i = 0; i < rlen; ++i) {
-    Serial.print(buf[i]);
-  }
-  Serial.print("\n");
-  delay(10);
-
-  int x = atoi(buf);
-
-//  Coordinates coordinates = validateString(coords);
-//  int x = coordinates.xCoord;
-
-  int microseconds = (x / PIXELS) * RIGHT;
-  if(microseconds >= LEFT) {
-//    Serial.print(microseconds);
-    Serial.print("\n");
-    xServoWrite(microseconds);
-  }
-  memset(buf, 0, sizeof buf);
-  delay(100);
-}
-
-Coordinates validateString(String str) {
-  Coordinates coordinates = Coordinates();
-  if (str != NULL) {
-    int commaIdx = str.indexOf(",");
-    if (commaIdx == -1) {
-      return coordinates;
+  char buf[BUF_SIZE];
+  unsigned long timeout = millis() + TIMEOUT;
+  uint8_t inIdx = 0;
+  bool received = false;
+  while (((uint32_t)(millis() - timeout) > 0) && (inIdx < (sizeof(buf)/sizeof(buf[0])))) {
+    if (Serial.available() > 0) {
+      received = true;
+      char c = Serial.read();
+      if (c == 'x') {
+        break;
+      }
+      buf[inIdx++] = c;
     }
-
-    int xCoord = str.substring(0, commaIdx).toInt();
-    int yCoord = str.substring(commaIdx+1).toInt();
-
-    coordinates.xCoord = xCoord;
-    coordinates.yCoord = yCoord;
-
-    return coordinates;
   }
-  return coordinates;
+  if (received) {
+    int xCoord = atoi(buf);
+    if (xCoord > 0) {
+      xServoMove(xCoord);
+    }
+  }
 }
 
-void xServoWrite(int ms) {
-  xServo.writeMicroseconds(ms);
-  // delay(10);
+void xServoMove(int coord) {
+  float fovFraction = coord / X_PIXELS;
+  float degreeMovementFromZero = fovFraction * FOV;
+  int positionDegrees = ZERO_DEGREES + (int)degreeMovementFromZero;
+  int microseconds = (positionDegrees * ONE_DEGREE) + TRUE_LEFT;
+  if (microseconds >= LEFT) {
+    xServo.writeMicroseconds(microseconds);
+  }
 }
