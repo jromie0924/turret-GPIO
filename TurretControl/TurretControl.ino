@@ -57,7 +57,7 @@ void xServoMove(int coord) {
   float degreeMovementFromZero = fovFraction * FOV;
   int positionDegrees = ZERO_DEGREES + (int)degreeMovementFromZero;
   int microseconds = (positionDegrees * ONE_DEGREE) + TRUE_LEFT;
-  if (microseconds >= LEFT) {
+  if (microseconds >= LEFT && microseconds <= RIGHT) {
     xServo.writeMicroseconds(microseconds);
   }
 }
