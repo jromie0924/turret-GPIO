@@ -20,8 +20,6 @@
 
 Servo xServo;
 
-int pos = CENTER;
-
 void setup() {
   xServo.attach(X_PIN, LEFT, RIGHT);
   xServo.writeMicroseconds(CENTER);
