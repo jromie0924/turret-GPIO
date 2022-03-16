@@ -32,11 +32,12 @@ void loop() {
   unsigned long timeout = millis() + TIMEOUT;
   uint8_t inIdx = 0;
   bool received = false;
-  while (((uint32_t)(millis() - timeout) > 0) && (inIdx < (sizeof(buf)/sizeof(buf[0])))) {
+  while ((uint32_t)(millis() - timeout) > 0 && inIdx < sizeof(buf)) {
     if (Serial.available() > 0) {
       received = true;
       char c = Serial.read();
       if (c == 'x') {
+        buf[inIdx] = '\0';
         break;
       }
       buf[inIdx++] = c;
@@ -54,6 +55,7 @@ void xServoMove(int coord) {
   float fovFraction = coord / X_PIXELS;
   float degreeMovementFromZero = fovFraction * FOV;
   int positionDegrees = ZERO_DEGREES + (int)degreeMovementFromZero;
+
   int microseconds = (positionDegrees * ONE_DEGREE) + TRUE_LEFT;
   if (microseconds >= LEFT && microseconds <= RIGHT) {
     xServo.writeMicroseconds(microseconds);
